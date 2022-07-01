@@ -1,90 +1,87 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { validEmail, validPassword } from './Regex.js';
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { validEmail, validPassword } from "./Regex.js";
+import { useForm } from "react-hook-form";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-const Login = () => {
-    let navigate = useNavigate();
-    const [user, setUser] = useState([]);
-    const [errors, setErrors] = useState({});
+const Login = (props) => {
+  let navigate = useNavigate();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
 
-    const inputChange = (e) => {
-        // console.log(e.target.value);
-        setUser({
-            ...user,
-            [e.target.name]: e.target.value.trim()
-        })
+  const loginUserData = (userData) => {
+    // check UseData with Localstorage data....
+    let getData = localStorage.getItem("UserData");
+    let myData = JSON.parse(getData);
+    // console.log("Local Storage Data: ", myData);
+
+    const foundUser = myData.find(
+      (element) =>
+        element.email === userData.email &&
+        element.password === userData.password
+    );
+    // console.log("foundUser: ", foundUser);
+    if (foundUser) {
+      toast.success("Successfully Login!");
+      props.setUser(true);
+      navigate("/home", { state: { name: foundUser.name } });
+    } else {
+      toast.error("Enter valid credentials!");
     }
-    const loginUserData = (e) => {
-        e.preventDefault();
-
-        // Form Validation....
-        if (!user.email || user.email === "") {
-            setErrors({
-                email: "Email must be required*"
-            });
-            return;
-        } else if (!user.email || validEmail.test(user.email) === false) {
-            setErrors({
-                email: "Email is not valid*"
-            });
-            return;
-        } else if (!user.password || user.password === "") {
-            setErrors({
-                password: "Password must be required*"
-            });
-            return;
-        } else if (!user.password || validPassword.test(user.password) === false) {
-            setErrors({
-                password: "Password is not valid*"
-            });
-            return;
-        } else {
-
-            // Form Validation is finished then check UseData with Localstorage data....
-            setErrors({});
-            let getData = localStorage.getItem("UserData");
-            let myData = JSON.parse(getData);
-            // console.log("Local Storage Data: ", myData);
-
-            const foundUser = myData.find((element) => (
-                element.email === user.email && element.password === user.password
-            ));
-            // console.log("foundUser: ", foundUser);
-            if (foundUser) {
-                // console.log("working");
-                navigate("/home", {state:{name:foundUser.name}});
-            } else {
-                // console.log("not working");
-                alert("Enter valid credentials!");
-            }
-        }
-    }
+  };
 
   return (
     <>
-        <div className='container'>
-            <h1>Login Form</h1>
-            <form className='user-form'>
-                <input type="text" 
-                    name="email" 
-                    placeholder='Email'
-                    onChange={e => inputChange(e)}
-                />
-                { errors.email ?  <div className='error'>{errors.email}</div> : <br/> }
-                <br/>
-                <input type="text" 
-                    name="password" 
-                    placeholder='Password'
-                    onChange={e => inputChange(e)}
-                />
-                { errors.password ?  <div className='error'>{errors.password}</div> : <br/> }
-                <br/>
-                <button className='btn signup-btn' onClick={e => loginUserData(e)}>Login</button>
-                <p>Not a member? <Link className='btn already-signup-btn' to={`/`}>Sign Up</Link></p>
-            </form>
-        </div>
+      <div className="container">
+        <h1>Login Form</h1>
+        <form className="user-form" onSubmit={handleSubmit(loginUserData)}>
+          <input
+            placeholder="Email"
+            {...register("email", {
+              required: true,
+              pattern: validEmail,
+            })}
+          />
+          <br />
+          {errors?.email?.type === "required" && (
+            <div className="error">Email must be required*</div>
+          )}
+          {errors?.email?.type === "pattern" && (
+            <div className="error">Email is not valid*</div>
+          )}
+          <br />
+
+          <input
+            placeholder="Password"
+            {...register("password", {
+              required: true,
+              pattern: validPassword,
+            })}
+          />
+          <br />
+          {errors?.password?.type === "required" && (
+            <div className="error">Password must be required*</div>
+          )}
+          {errors?.password?.type === "pattern" && (
+            <div className="error">Password is not valid*</div>
+          )}
+          <br />
+
+          <input type="submit" className="btn signup-btn" value="Login" />
+          <p>
+            Not a member?{" "}
+            <Link className="btn already-signup-btn" to={`/`}>
+              Sign Up
+            </Link>
+          </p>
+        </form>
+      </div>
     </>
-  )
-}
+  );
+};
 
 export default Login;
